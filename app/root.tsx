@@ -144,7 +144,7 @@ function Layout({children}: {children?: React.ReactNode}) {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="bg-contrast text-primary">
         {data ? (
           <Analytics.Provider
             cart={data.cart}

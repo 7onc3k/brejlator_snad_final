@@ -191,14 +191,14 @@ function MobileHeader({
         isHome
           ? 'bg-primary/80 dark:bg-contrast/60 text-contrast dark:text-primary shadow-darkHeader'
           : 'bg-contrast/80 text-primary'
-      } flex lg:hidden items-center h-nav sticky backdrop-blur-lg z-40 top-0 justify-between w-full leading-none gap-4 px-4 md:px-8`}
+      } flex lg:hidden items-center h-16 sticky backdrop-blur-lg z-40 top-0 justify-between w-full leading-none gap-4 px-4 md:px-8`}
     >
       <div className="flex items-center justify-start w-full gap-4">
         <button
           onClick={openMenu}
-          className="relative flex items-center justify-center w-8 h-8"
+          className="relative flex items-center justify-center w-10 h-10"
         >
-          <IconMenu />
+          <IconMenu className="w-6 h-6" />
         </button>
         <Form
           method="get"
@@ -207,9 +207,9 @@ function MobileHeader({
         >
           <button
             type="submit"
-            className="relative flex items-center justify-center w-8 h-8"
+            className="relative flex items-center justify-center w-10 h-10"
           >
-            <IconSearch />
+            <IconSearch className="w-6 h-6" />
           </button>
           <Input
             className={
@@ -230,7 +230,7 @@ function MobileHeader({
         to="/"
       >
         <Heading
-          className="font-bold text-center leading-none"
+          className="font-bold text-center leading-none text-xl"
           as={isHome ? 'h1' : 'h2'}
         >
           {title}

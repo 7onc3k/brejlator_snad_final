@@ -4,9 +4,9 @@
 
 /* Tokens */
 :root {
-  --color-primary: 20 20 20; /* Text, buttons, etc. */
-  --color-contrast: 250 250 249; /* Backgrounds, borders, etc. */
-  --color-accent: 191 72 0; /* Labels like "On sale" */
+  --color-primary: 33 33 33; /* Text, buttons, etc. */
+  --color-contrast: 255 255 255; /* Backgrounds, borders, etc. */
+  --color-accent: 0 120 223; /* Labels like "On sale" */
   --font-size-fine: 0.75rem; /* text-xs */
   --font-size-copy: 1rem; /* text-base */
   --font-size-lead: 1.125rem; /* text-lg */
@@ -34,13 +34,7 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-primary: 250 250 250;
-    --color-contrast: 32 33 36;
-    --color-accent: 235 86 40;
-  }
-}
+/* Odstraníme tmavý režim, protože chceme pouze světlý režim */
 
 @keyframes fadeInAnimation {
   0% {
