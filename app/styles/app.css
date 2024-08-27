@@ -14,7 +14,7 @@
   --font-size-display: 3rem; /* text-4xl */
   --color-shop-pay: #5a31f4;
   --shop-pay-button--width: 100%; /* Sets the width for the shop-pay-button web component */
-  --height-nav: 3rem;
+  --height-nav: 4rem; /* 64px, což odpovídá h-16 */
   --screen-height: 100vh;
   --screen-height-dynamic: 100vh;
 
