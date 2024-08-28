@@ -2,8 +2,20 @@ import {Disclosure} from '@headlessui/react';
 import {Link} from '~/components/Link';
 import {Text, Heading, Section} from '~/components/Text';
 import {IconCaret} from '~/components/Icon';
-import {type EnhancedMenu, type ChildEnhancedMenuItem, useIsHomePath} from '~/lib/utils';
+import {
+  type EnhancedMenu,
+  type ChildEnhancedMenuItem,
+  useIsHomePath,
+} from '~/lib/utils';
 import {CountrySelector} from '~/components/CountrySelector';
+import {useShop} from '@shopify/hydrogen-react';
+import React, {Suspense} from 'react';
+
+const SOCIAL_MEDIA_LINKS = [
+  {handle: 'facebook', url: 'https://www.facebook.com/vasestranka'},
+  {handle: 'instagram', url: 'https://www.instagram.com/vasestranka'},
+  {handle: 'twitter', url: 'https://www.twitter.com/vasestranka'},
+];
 
 export function Footer({menu}: {menu?: EnhancedMenu}) {
   const isHome = useIsHomePath();
@@ -12,6 +24,8 @@ export function Footer({menu}: {menu?: EnhancedMenu}) {
       ? 4
       : menu?.items?.length + 1
     : [];
+
+  const shop = useShop();
 
   return (
     <Section
@@ -23,11 +37,33 @@ export function Footer({menu}: {menu?: EnhancedMenu}) {
     >
       <FooterMenu menu={menu} />
       <CountrySelector />
+      <div className="grid gap-4">
+        <Heading size="lead" as="h3">
+          Sledujte nás
+        </Heading>
+        <div className="flex gap-4">
+          {SOCIAL_MEDIA_LINKS.map((link) => (
+            <a
+              key={link.handle}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-contrast hover:text-primary transition"
+            >
+              {link.handle}
+            </a>
+          ))}
+        </div>
+      </div>
       <div
         className={`self-end pt-8 opacity-50 md:col-span-2 lg:col-span-${itemsCount}`}
       >
-        &copy; {new Date().getFullYear()} / Shopify, Inc. Hydrogen is an MIT
-        Licensed Open Source project.
+        &copy; {new Date().getFullYear()} / {shop.name}.{' '}
+        {shop.primaryDomain && (
+          <Link to={`https://${shop.primaryDomain.url}/policies/privacy-policy`}>
+            Zásady ochrany osobních údajů
+          </Link>
+        )}
       </div>
     </Section>
   );
@@ -97,3 +133,5 @@ function FooterMenu({menu}: {menu?: EnhancedMenu}) {
     </>
   );
 }
+
+// Odstraňte FOOTER_QUERY, protože již není potřeba
