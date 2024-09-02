@@ -11,7 +11,7 @@ import {
   useIsHomePath,
 } from '~/lib/utils';
 import {CountrySelector} from '~/components/CountrySelector';
-import {NewsletterSignup} from '~/components/NewsletterSignup';
+
 
 const SOCIAL_MEDIA_LINKS = [
   {handle: 'facebook', url: 'https://www.facebook.com/vasestranka'},
@@ -57,7 +57,7 @@ export function Footer({menu}: {menu?: EnhancedMenu}) {
           ))}
         </div>
       </div>
-      <NewsletterSignup />
+      
       <div
         className={`self-end pt-8 opacity-50 md:col-span-2 lg:col-span-${itemsCount}`}
       >
