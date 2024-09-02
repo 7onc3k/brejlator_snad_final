@@ -1,4 +1,7 @@
 import {Disclosure} from '@headlessui/react';
+import React, {Suspense} from 'react';
+import {useShop} from '@shopify/hydrogen-react';
+
 import {Link} from '~/components/Link';
 import {Text, Heading, Section} from '~/components/Text';
 import {IconCaret} from '~/components/Icon';
@@ -8,8 +11,6 @@ import {
   useIsHomePath,
 } from '~/lib/utils';
 import {CountrySelector} from '~/components/CountrySelector';
-import {useShop} from '@shopify/hydrogen-react';
-import React, {Suspense} from 'react';
 
 const SOCIAL_MEDIA_LINKS = [
   {handle: 'facebook', url: 'https://www.facebook.com/vasestranka'},
@@ -58,12 +59,8 @@ export function Footer({menu}: {menu?: EnhancedMenu}) {
       <div
         className={`self-end pt-8 opacity-50 md:col-span-2 lg:col-span-${itemsCount}`}
       >
-        &copy; {new Date().getFullYear()} / {shop.name}.{' '}
-        {shop.primaryDomain && (
-          <Link to={`https://${shop.primaryDomain.url}/policies/privacy-policy`}>
-            Zásady ochrany osobních údajů
-          </Link>
-        )}
+        &copy; {new Date().getFullYear()} / {shop.storeDomain}.{' '}
+        <Link to="/policies/privacy-policy">Zásady ochrany osobních údajů</Link>
       </div>
     </Section>
   );
