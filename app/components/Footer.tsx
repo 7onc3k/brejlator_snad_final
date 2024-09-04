@@ -72,8 +72,7 @@ export function Footer({menu}: {menu?: EnhancedMenu}) {
       <div
         className={`self-end pt-8 opacity-50 md:col-span-2 lg:col-span-${itemsCount}`}
       >
-        &copy; {new Date().getFullYear()} / {shop.storeDomain}.{' '}
-        <Link to="/policies/privacy-policy">Zásady ochrany osobních údajů</Link>
+        &copy; {new Date().getFullYear()} | Brejlator.cz powered by Shopify
       </div>
     </Section>
   );
