@@ -1,6 +1,7 @@
-import {Disclosure} from '@headlessui/react';
-import React, {Suspense} from 'react';
-import {useShop} from '@shopify/hydrogen-react';
+import { Disclosure } from '@headlessui/react';
+import React, { Suspense } from 'react';
+import { useShop } from '@shopify/hydrogen-react';
+import { FaInstagram, FaTiktok } from 'react-icons/fa';
 
 import {Link} from '~/components/Link';
 import {Text, Heading, Section} from '~/components/Text';
@@ -12,11 +13,9 @@ import {
 } from '~/lib/utils';
 import {CountrySelector} from '~/components/CountrySelector';
 
-
 const SOCIAL_MEDIA_LINKS = [
-  {handle: 'facebook', url: 'https://www.facebook.com/vasestranka'},
-  {handle: 'instagram', url: 'https://www.instagram.com/vasestranka'},
-  {handle: 'twitter', url: 'https://www.twitter.com/vasestranka'},
+  {handle: 'instagram', url: 'https://www.instagram.com/vasestranka', icon: FaInstagram},
+  {handle: 'tiktok', url: 'https://www.tiktok.com/@vasestranka', icon: FaTiktok},
 ];
 
 export function Footer({menu}: {menu?: EnhancedMenu}) {
@@ -38,24 +37,26 @@ export function Footer({menu}: {menu?: EnhancedMenu}) {
         bg-primary dark:bg-contrast dark:text-primary text-contrast overflow-hidden`}
     >
       <FooterMenu menu={menu} />
-      <CountrySelector />
-      <div className="grid gap-4">
-        <Heading size="lead" as="h3">
-          Sledujte nás
-        </Heading>
-        <div className="flex gap-4">
-          {SOCIAL_MEDIA_LINKS.map((link) => (
-            <a
-              key={link.handle}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-contrast hover:text-primary transition"
-            >
-              {link.handle}
-            </a>
-          ))}
+      <div className="grid gap-8">
+        <div className="grid gap-4">
+          <Heading size="lead" as="h3">
+            Sledujte nás
+          </Heading>
+          <div className="flex gap-4">
+            {SOCIAL_MEDIA_LINKS.map((link) => (
+              <a
+                key={link.handle}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-black hover:text-primary transition"
+              >
+                <link.icon size={24} />
+              </a>
+            ))}
+          </div>
         </div>
+        <CountrySelector />
       </div>
       
       <div
