@@ -38,7 +38,7 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   const {collectionHandle} = params;
   const searchParams = new URL(request.url).searchParams;
   const cursor = searchParams.get('cursor');
-  
+
   const {collection} = await context.storefront.query(COLLECTION_QUERY, {
     variables: {
       handle: collectionHandle,
@@ -66,7 +66,9 @@ export default function Collection() {
   const {collection} = useLoaderData<typeof loader>();
   const [products, setProducts] = useState(collection.products.nodes);
   const [cursor, setCursor] = useState(collection.products.pageInfo.endCursor);
-  const [hasNextPage, setHasNextPage] = useState(collection.products.pageInfo.hasNextPage);
+  const [hasNextPage, setHasNextPage] = useState(
+    collection.products.pageInfo.hasNextPage,
+  );
   const fetcher = useFetcher();
 
   const loadMore = () => {
