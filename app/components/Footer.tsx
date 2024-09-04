@@ -1,7 +1,7 @@
-import { Disclosure } from '@headlessui/react';
-import React, { Suspense } from 'react';
-import { useShop } from '@shopify/hydrogen-react';
-import { FaInstagram, FaTiktok } from 'react-icons/fa';
+import {Disclosure} from '@headlessui/react';
+import React, {Suspense} from 'react';
+import {useShop} from '@shopify/hydrogen-react';
+import {FaInstagram, FaTiktok} from 'react-icons/fa';
 
 import {Link} from '~/components/Link';
 import {Text, Heading, Section} from '~/components/Text';
@@ -14,8 +14,16 @@ import {
 import {CountrySelector} from '~/components/CountrySelector';
 
 const SOCIAL_MEDIA_LINKS = [
-  {handle: 'instagram', url: 'https://www.instagram.com/vasestranka', icon: FaInstagram},
-  {handle: 'tiktok', url: 'https://www.tiktok.com/@vasestranka', icon: FaTiktok},
+  {
+    handle: 'instagram',
+    url: 'https://www.instagram.com/vasestranka',
+    icon: FaInstagram,
+  },
+  {
+    handle: 'tiktok',
+    url: 'https://www.tiktok.com/@vasestranka',
+    icon: FaTiktok,
+  },
 ];
 
 export function Footer({menu}: {menu?: EnhancedMenu}) {
@@ -58,7 +66,7 @@ export function Footer({menu}: {menu?: EnhancedMenu}) {
         </div>
         <CountrySelector />
       </div>
-      
+
       <div
         className={`self-end pt-8 opacity-50 md:col-span-2 lg:col-span-${itemsCount}`}
       >
