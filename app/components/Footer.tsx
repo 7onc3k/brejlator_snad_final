@@ -1,5 +1,5 @@
 import {Disclosure} from '@headlessui/react';
-import React, {Suspense} from 'react';
+import React, {Suspense, useState} from 'react';
 import {useShop} from '@shopify/hydrogen-react';
 import {FaInstagram, FaTiktok} from 'react-icons/fa';
 
@@ -27,6 +27,7 @@ const SOCIAL_MEDIA_LINKS = [
 ];
 
 export function Footer({menu}: {menu?: EnhancedMenu}) {
+  const [isCountrySelectorOpen, setIsCountrySelectorOpen] = useState(false);
   const isHome = useIsHomePath();
   const itemsCount = menu
     ? menu?.items?.length + 1 > 4
@@ -42,7 +43,8 @@ export function Footer({menu}: {menu?: EnhancedMenu}) {
       as="footer"
       role="contentinfo"
       className={`grid min-h-[25rem] items-start grid-flow-row w-full gap-6 py-8 px-6 md:px-8 lg:px-12 md:gap-8 lg:gap-12 grid-cols-1 md:grid-cols-2 lg:grid-cols-${itemsCount}
-        bg-primary dark:bg-contrast dark:text-primary text-contrast overflow-hidden`}
+        bg-primary dark:bg-contrast dark:text-primary text-contrast overflow-hidden
+        ${isCountrySelectorOpen ? 'pb-[300px] md:pb-8' : ''}`}
     >
       <FooterMenu menu={menu} />
       <div className="grid gap-8">
@@ -64,7 +66,7 @@ export function Footer({menu}: {menu?: EnhancedMenu}) {
             ))}
           </div>
         </div>
-        <CountrySelector />
+        <CountrySelector onOpenChange={setIsCountrySelectorOpen} />
       </div>
 
       <div
@@ -106,15 +108,15 @@ function FooterMenu({menu}: {menu?: EnhancedMenu}) {
           <Disclosure>
             {({open}) => (
               <>
-                <Disclosure.Button className="text-left md:cursor-default">
+                <Disclosure.Button className="text-left md:cursor-default w-full flex justify-between items-center">
                   <Heading className="flex justify-between" size="lead" as="h3">
                     {item.title}
-                    {item?.items?.length > 0 && (
-                      <span className="md:hidden">
-                        <IconCaret direction={open ? 'up' : 'down'} />
-                      </span>
-                    )}
                   </Heading>
+                  {item?.items?.length > 0 && (
+                    <span className="md:hidden">
+                      <IconCaret direction={open ? 'up' : 'down'} />
+                    </span>
+                  )}
                 </Disclosure.Button>
                 {item?.items?.length > 0 ? (
                   <div

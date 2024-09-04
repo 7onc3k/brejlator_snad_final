@@ -1,5 +1,6 @@
+import {useState, useEffect} from 'react';
 import {useFetcher, useLocation, useRouteLoaderData} from '@remix-run/react';
-import {useCallback, useEffect, useRef} from 'react';
+import {useCallback, useRef} from 'react';
 import {useInView} from 'react-intersection-observer';
 import clsx from 'clsx';
 import type {CartBuyerIdentityInput} from '@shopify/hydrogen/storefront-api-types';
@@ -7,12 +8,17 @@ import {CartForm} from '@shopify/hydrogen';
 
 import {Button} from '~/components/Button';
 import {Heading} from '~/components/Text';
-import {IconCheck} from '~/components/Icon';
+import {IconCaret, IconCheck} from '~/components/Icon';
 import type {Localizations, Locale} from '~/lib/type';
 import {DEFAULT_LOCALE} from '~/lib/utils';
 import type {RootLoader} from '~/root';
 
-export function CountrySelector() {
+export function CountrySelector({
+  onOpenChange,
+}: {
+  onOpenChange: (isOpen: boolean) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
   const fetcher = useFetcher();
   const closeRef = useRef<HTMLDetailsElement>(null);
   const rootData = useRouteLoaderData<RootLoader>('root');
@@ -49,24 +55,35 @@ export function CountrySelector() {
     closeRef.current?.removeAttribute('open');
   }, []);
 
+  useEffect(() => {
+    onOpenChange(isOpen);
+  }, [isOpen, onOpenChange]);
+
+  const toggleDropdown = () => {
+    setIsOpen(!isOpen);
+  };
+
   return (
-    <section
-      ref={observerRef}
-      className="grid w-full gap-4"
-      onMouseLeave={closeDropdown}
-    >
+    <section ref={observerRef} className="grid w-full gap-4">
       <Heading size="lead" className="cursor-default" as="h3">
         Country
       </Heading>
       <div className="relative">
-        <details
-          className="absolute w-full border rounded border-contrast/30 dark:border-white open:round-b-none overflow-clip"
-          ref={closeRef}
+        <button
+          className="flex items-center justify-between w-full px-4 py-3 border rounded border-contrast/30 dark:border-white hover:bg-primary/10"
+          onClick={toggleDropdown}
         >
-          <summary className="flex items-center justify-between w-full px-4 py-3 cursor-pointer">
-            {selectedLocale.label}
-          </summary>
-          <div className="w-full overflow-auto border-t border-contrast/30 dark:border-white bg-contrast/30 max-h-36">
+          {selectedLocale.label}
+          <span
+            className={`transition-transform duration-200 ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          >
+            <IconCaret direction="down" />
+          </span>
+        </button>
+        {isOpen && (
+          <div className="absolute w-full mt-2 overflow-auto border rounded border-contrast/30 dark:border-white bg-contrast/30 max-h-60 z-10">
             {countries &&
               Object.keys(countries).map((countryPath) => {
                 const countryLocale = countries[countryPath];
@@ -91,7 +108,7 @@ export function CountrySelector() {
                 );
               })}
           </div>
-        </details>
+        )}
       </div>
     </section>
   );
@@ -119,8 +136,9 @@ function Country({
       <Button
         className={clsx([
           'text-contrast dark:text-primary',
-          'bg-primary dark:bg-contrast w-full p-2 transition rounded flex justify-start',
+          'bg-primary dark:bg-contrast w-full p-2 transition rounded flex justify-between',
           'items-center text-left cursor-pointer py-2 px-4',
+          'hover:bg-primary/10',
         ])}
         type="submit"
         variant="primary"
