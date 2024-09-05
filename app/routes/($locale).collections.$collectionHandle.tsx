@@ -3,6 +3,7 @@ import {
   json,
   type MetaArgs,
   type LoaderFunctionArgs,
+  type SerializeFrom,
 } from '@shopify/remix-oxygen';
 import {useLoaderData, useNavigate, useFetcher} from '@remix-run/react';
 import {useInView} from 'react-intersection-observer';
@@ -31,6 +32,9 @@ import {seoPayload} from '~/lib/seo.server';
 import {FILTER_URL_PREFIX} from '~/components/SortFilter';
 import {getImageLoadingPriority} from '~/lib/const';
 import {parseAsCurrency} from '~/lib/utils';
+import type {I18nLocale} from '~/lib/type';
+
+type CollectionLoaderData = SerializeFrom<typeof loader>;
 
 export const headers = routeHeaders;
 
@@ -57,8 +61,8 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
 
   const {collection} = await context.storefront.query(COLLECTION_QUERY, {
     variables: {
-      handle: collectionHandle,
-      cursor: cursor,
+      handle: collectionHandle!,
+      cursor,
       pageBy: 8,
       country: context.storefront.i18n.country,
       language: context.storefront.i18n.language,
@@ -89,13 +93,13 @@ export const meta = ({matches}: MetaArgs<typeof loader>) => {
 };
 
 export default function Collection() {
-  const {collection, appliedFilters} = useLoaderData<typeof loader>();
+  const {collection, appliedFilters} = useLoaderData<CollectionLoaderData>();
   const [products, setProducts] = useState(collection.products.nodes);
   const [cursor, setCursor] = useState(collection.products.pageInfo.endCursor);
   const [hasNextPage, setHasNextPage] = useState(
     collection.products.pageInfo.hasNextPage,
   );
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<CollectionLoaderData>();
 
   const loadMore = () => {
     if (!hasNextPage) return;
@@ -103,10 +107,18 @@ export default function Collection() {
   };
 
   useEffect(() => {
-    if (fetcher.data && fetcher.data.collection) {
-      setProducts([...products, ...fetcher.data.collection.products.nodes]);
-      setCursor(fetcher.data.collection.products.pageInfo.endCursor);
-      setHasNextPage(fetcher.data.collection.products.pageInfo.hasNextPage);
+    if (
+      fetcher.data &&
+      'collection' in fetcher.data &&
+      fetcher.data.collection
+    ) {
+      const collectionData = fetcher.data.collection;
+      setProducts((prevProducts: typeof products) => [
+        ...prevProducts,
+        ...collectionData.products.nodes,
+      ]);
+      setCursor(collectionData.products.pageInfo.endCursor);
+      setHasNextPage(collectionData.products.pageInfo.hasNextPage);
     }
   }, [fetcher.data]);
 
@@ -130,7 +142,7 @@ export default function Collection() {
           collections={[]}
         >
           <Grid layout="products">
-            {products.map((product, i) => (
+            {products.map((product: any, i: number) => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -272,7 +284,7 @@ function getAppliedFilters(
         return JSON.stringify(valueInput) === JSON.stringify(filter);
       });
       if (!foundValue) {
-        console.error('Could not find filter value for filter', filter);
+        // console.error('Could not find filter value for filter', filter);
         return null;
       }
       if (foundValue.id === 'filter.v.price') {
