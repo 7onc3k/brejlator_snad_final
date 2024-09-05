@@ -39,13 +39,32 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   const searchParams = new URL(request.url).searchParams;
   const cursor = searchParams.get('cursor');
 
+  const {sortKey, reverse} = getSortValuesFromParam(
+    searchParams.get('sort') as SortParam,
+  );
+  const filters = [...searchParams.entries()].reduce(
+    (filters, [key, value]) => {
+      if (key.startsWith(FILTER_URL_PREFIX)) {
+        const filterKey = key.substring(FILTER_URL_PREFIX.length);
+        filters.push({
+          [filterKey]: JSON.parse(value),
+        });
+      }
+      return filters;
+    },
+    [] as ProductFilter[],
+  );
+
   const {collection} = await context.storefront.query(COLLECTION_QUERY, {
     variables: {
       handle: collectionHandle,
       cursor: cursor,
-      pageBy: 8, // Načteme 8 produktů najednou pro lepší zobrazení v mřížce
+      pageBy: 8,
       country: context.storefront.i18n.country,
       language: context.storefront.i18n.language,
+      filters,
+      sortKey,
+      reverse,
     },
   });
 
@@ -53,8 +72,15 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
     throw new Response('collection', {status: 404});
   }
 
+  const appliedFilters = getAppliedFilters(
+    collection.products.filters,
+    filters,
+    context.storefront.i18n,
+  );
+
   return json({
     collection,
+    appliedFilters,
   });
 }
 
@@ -63,7 +89,7 @@ export const meta = ({matches}: MetaArgs<typeof loader>) => {
 };
 
 export default function Collection() {
-  const {collection} = useLoaderData<typeof loader>();
+  const {collection, appliedFilters} = useLoaderData<typeof loader>();
   const [products, setProducts] = useState(collection.products.nodes);
   const [cursor, setCursor] = useState(collection.products.pageInfo.endCursor);
   const [hasNextPage, setHasNextPage] = useState(
@@ -98,27 +124,33 @@ export default function Collection() {
         )}
       </PageHeader>
       <Section>
-        <Grid layout="products">
-          {products.map((product, i) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              loading={getImageLoadingPriority(i)}
-            />
-          ))}
-        </Grid>
-        {hasNextPage && (
-          <div className="flex items-center justify-center mt-6">
-            <Button
-              onClick={loadMore}
-              disabled={fetcher.state !== 'idle'}
-              variant="secondary"
-              width="auto"
-            >
-              {fetcher.state !== 'idle' ? 'Načítání...' : 'Načíst další'}
-            </Button>
-          </div>
-        )}
+        <SortFilter
+          filters={collection.products.filters as Filter[]}
+          appliedFilters={appliedFilters}
+          collections={[]}
+        >
+          <Grid layout="products">
+            {products.map((product, i) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                loading={getImageLoadingPriority(i)}
+              />
+            ))}
+          </Grid>
+          {hasNextPage && (
+            <div className="flex items-center justify-center mt-6">
+              <Button
+                onClick={loadMore}
+                disabled={fetcher.state !== 'idle'}
+                variant="secondary"
+                width="auto"
+              >
+                {fetcher.state !== 'idle' ? 'Načítání...' : 'Načíst další'}
+              </Button>
+            </div>
+          )}
+        </SortFilter>
       </Section>
       <Analytics.CollectionView
         data={{
@@ -139,6 +171,9 @@ const COLLECTION_QUERY = `#graphql
     $language: LanguageCode
     $pageBy: Int!
     $cursor: String
+    $filters: [ProductFilter!]
+    $sortKey: ProductCollectionSortKeys!
+    $reverse: Boolean
   ) @inContext(country: $country, language: $language) {
     collection(handle: $handle) {
       id
@@ -156,7 +191,7 @@ const COLLECTION_QUERY = `#graphql
         height
         altText
       }
-      products(first: $pageBy, after: $cursor) {
+      products(first: $pageBy, after: $cursor, filters: $filters, sortKey: $sortKey, reverse: $reverse) {
         filters {
           id
           label
@@ -176,14 +211,6 @@ const COLLECTION_QUERY = `#graphql
           hasNextPage
           endCursor
           startCursor
-        }
-      }
-    }
-    collections(first: 100) {
-      edges {
-        node {
-          title
-          handle
         }
       }
     }
@@ -227,4 +254,37 @@ function getSortValuesFromParam(sortParam: SortParam | null): {
         reverse: false,
       };
   }
+}
+
+function getAppliedFilters(
+  filters: Filter[],
+  appliedFilters: ProductFilter[],
+  locale: I18nLocale,
+) {
+  const allFilterValues = filters.flatMap((filter) => filter.values);
+  return appliedFilters
+    .map((filter) => {
+      const foundValue = allFilterValues.find((value) => {
+        const valueInput = JSON.parse(value.input as string) as ProductFilter;
+        if (valueInput.price && filter.price) {
+          return true;
+        }
+        return JSON.stringify(valueInput) === JSON.stringify(filter);
+      });
+      if (!foundValue) {
+        console.error('Could not find filter value for filter', filter);
+        return null;
+      }
+      if (foundValue.id === 'filter.v.price') {
+        const input = JSON.parse(foundValue.input as string) as ProductFilter;
+        const min = parseAsCurrency(input.price?.min ?? 0, locale);
+        const max = input.price?.max
+          ? parseAsCurrency(input.price.max, locale)
+          : '';
+        const label = min && max ? `${min} - ${max}` : 'Cena';
+        return {filter, label};
+      }
+      return {filter, label: foundValue.label};
+    })
+    .filter((filter): filter is NonNullable<typeof filter> => filter !== null);
 }
