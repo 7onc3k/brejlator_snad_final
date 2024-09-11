@@ -5,7 +5,7 @@ import {
   type LoaderFunctionArgs,
   type SerializeFrom,
 } from '@shopify/remix-oxygen';
-import {useLoaderData, useNavigate, useFetcher} from '@remix-run/react';
+import {useLoaderData, useNavigate, useFetcher, Link} from '@remix-run/react';
 import {useInView} from 'react-intersection-observer';
 import type {
   Filter,
@@ -41,32 +41,17 @@ export const headers = routeHeaders;
 export async function loader({params, request, context}: LoaderFunctionArgs) {
   const {collectionHandle} = params;
   const searchParams = new URL(request.url).searchParams;
-  const cursor = searchParams.get('cursor');
-
   const {sortKey, reverse} = getSortValuesFromParam(
     searchParams.get('sort') as SortParam,
   );
-  const filters = [...searchParams.entries()].reduce(
-    (filters, [key, value]) => {
-      if (key.startsWith(FILTER_URL_PREFIX)) {
-        const filterKey = key.substring(FILTER_URL_PREFIX.length);
-        filters.push({
-          [filterKey]: JSON.parse(value),
-        });
-      }
-      return filters;
-    },
-    [] as ProductFilter[],
-  );
+  const paginationVariables = getPaginationVariables(request, {pageBy: 8});
 
   const {collection} = await context.storefront.query(COLLECTION_QUERY, {
     variables: {
       handle: collectionHandle!,
-      cursor,
-      pageBy: 8,
+      ...paginationVariables,
       country: context.storefront.i18n.country,
       language: context.storefront.i18n.language,
-      filters,
       sortKey,
       reverse,
     },
@@ -78,7 +63,7 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
 
   const appliedFilters = getAppliedFilters(
     collection.products.filters,
-    filters,
+    [],
     context.storefront.i18n,
   );
 
@@ -94,33 +79,6 @@ export const meta = ({matches}: MetaArgs<typeof loader>) => {
 
 export default function Collection() {
   const {collection, appliedFilters} = useLoaderData<CollectionLoaderData>();
-  const [products, setProducts] = useState(collection.products.nodes);
-  const [cursor, setCursor] = useState(collection.products.pageInfo.endCursor);
-  const [hasNextPage, setHasNextPage] = useState(
-    collection.products.pageInfo.hasNextPage,
-  );
-  const fetcher = useFetcher<CollectionLoaderData>();
-
-  const loadMore = () => {
-    if (!hasNextPage) return;
-    fetcher.load(`?cursor=${cursor}`);
-  };
-
-  useEffect(() => {
-    if (
-      fetcher.data &&
-      'collection' in fetcher.data &&
-      fetcher.data.collection
-    ) {
-      const collectionData = fetcher.data.collection;
-      setProducts((prevProducts: typeof products) => [
-        ...prevProducts,
-        ...collectionData.products.nodes,
-      ]);
-      setCursor(collectionData.products.pageInfo.endCursor);
-      setHasNextPage(collectionData.products.pageInfo.hasNextPage);
-    }
-  }, [fetcher.data]);
 
   return (
     <>
@@ -136,34 +94,37 @@ export default function Collection() {
         )}
       </PageHeader>
       <Section className="min-h-screen pb-20">
-        {' '}
-        {/* Přidáno min-h-screen a padding-bottom */}
         <SortFilter
           filters={collection.products.filters as Filter[]}
           appliedFilters={appliedFilters}
           collections={[]}
         >
-          <Grid layout="products">
-            {products.map((product: any, i: number) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                loading={getImageLoadingPriority(i)}
-              />
-            ))}
-          </Grid>
-          {hasNextPage && (
-            <div className="flex items-center justify-center mt-6">
-              <Button
-                onClick={loadMore}
-                disabled={fetcher.state !== 'idle'}
-                variant="secondary"
-                width="auto"
-              >
-                {fetcher.state !== 'idle' ? 'Načítání...' : 'Načíst další'}
-              </Button>
-            </div>
-          )}
+          <Pagination connection={collection.products}>
+            {({nodes, isLoading, PreviousLink, NextLink}) => (
+              <>
+                <div className="flex items-center justify-center mb-6">
+                  <Button as={PreviousLink} variant="secondary" width="full">
+                    {isLoading ? 'Načítání...' : 'Předchozí produkty'}
+                  </Button>
+                </div>
+                <Grid layout="products" className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6">
+                  {nodes.map((product, i) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      loading={getImageLoadingPriority(i)}
+                      className="w-full h-full"
+                    />
+                  ))}
+                </Grid>
+                <div className="flex items-center justify-center mt-6">
+                  <Button as={NextLink} variant="secondary" width="full">
+                    {isLoading ? 'Načítání...' : 'Další produkty'}
+                  </Button>
+                </div>
+              </>
+            )}
+          </Pagination>
         </SortFilter>
       </Section>
       <Analytics.CollectionView
@@ -183,10 +144,11 @@ const COLLECTION_QUERY = `#graphql
     $handle: String!
     $country: CountryCode
     $language: LanguageCode
-    $pageBy: Int!
-    $cursor: String
-    $filters: [ProductFilter!]
-    $sortKey: ProductCollectionSortKeys!
+    $first: Int
+    $last: Int
+    $startCursor: String
+    $endCursor: String
+    $sortKey: ProductCollectionSortKeys
     $reverse: Boolean
   ) @inContext(country: $country, language: $language) {
     collection(handle: $handle) {
@@ -205,7 +167,14 @@ const COLLECTION_QUERY = `#graphql
         height
         altText
       }
-      products(first: $pageBy, after: $cursor, filters: $filters, sortKey: $sortKey, reverse: $reverse) {
+      products(
+        first: $first,
+        last: $last,
+        before: $startCursor,
+        after: $endCursor,
+        sortKey: $sortKey,
+        reverse: $reverse
+      ) {
         filters {
           id
           label
@@ -223,8 +192,8 @@ const COLLECTION_QUERY = `#graphql
         pageInfo {
           hasPreviousPage
           hasNextPage
-          endCursor
           startCursor
+          endCursor
         }
       }
     }

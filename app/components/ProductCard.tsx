@@ -46,76 +46,52 @@ export function ProductCard({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={clsx('flex flex-col h-full', className)}>
       <Link
         onClick={onClick}
         to={`/products/${product.handle}`}
         prefetch="viewport"
+        className="flex-grow"
       >
-        <div className={clsx('grid gap-4', className)}>
-          <div className="card-image aspect-square bg-primary/5 relative overflow-hidden">
-            {image && (
-              <Image
-                className="object-contain w-full h-full absolute inset-0"
-                sizes="(min-width: 64em) 25vw, (min-width: 48em) 30vw, 45vw"
-                aspectRatio="1/1"
-                data={image}
-                alt={image.altText || `Picture of ${product.title}`}
-                loading={loading}
-              />
-            )}
-            <Text
-              as="label"
-              size="fine"
-              className="absolute top-0 right-0 m-4 text-right text-notice"
-            >
-              {cardLabel}
-            </Text>
-          </div>
-          <div className="grid gap-1">
-            <Text
-              className="w-full overflow-hidden whitespace-nowrap text-ellipsis "
-              as="h3"
-            >
-              {product.title}
-            </Text>
-            <div className="flex gap-4">
-              <Text className="flex gap-4">
-                <Money withoutTrailingZeros data={price!} />
-                {isDiscounted(price as MoneyV2, compareAtPrice as MoneyV2) && (
-                  <CompareAtPrice
-                    className={'opacity-50'}
-                    data={compareAtPrice as MoneyV2}
-                  />
-                )}
-              </Text>
-            </div>
-          </div>
+        <div className="card-image aspect-square bg-primary/5 relative overflow-hidden">
+          {image && (
+            <Image
+              className="object-cover w-full h-full transition-all duration-500 ease-in-out transform hover:scale-110"
+              sizes="(min-width: 64em) 25vw, (min-width: 48em) 30vw, 45vw"
+              aspectRatio="1/1"
+              data={image}
+              alt={image.altText || `Picture of ${product.title}`}
+              loading={loading}
+            />
+          )}
+          <Text
+            as="label"
+            size="fine"
+            className="absolute top-0 right-0 m-4 text-right text-notice"
+          >
+            {cardLabel}
+          </Text>
         </div>
       </Link>
-      {quickAdd && firstVariant.availableForSale && (
-        <AddToCartButton
-          lines={[
-            {
-              quantity: 1,
-              merchandiseId: firstVariant.id,
-            },
-          ]}
-          variant="secondary"
-          className="mt-2"
+      <div className="flex flex-col justify-between flex-grow p-2">
+        <Text
+          className="w-full overflow-hidden whitespace-nowrap text-ellipsis "
+          as="h3"
         >
-          <Text as="span" className="flex items-center justify-center gap-2">
-            Add to Cart
+          {product.title}
+        </Text>
+        <div className="flex gap-4">
+          <Text className="flex gap-4">
+            <Money withoutTrailingZeros data={price!} />
+            {isDiscounted(price as MoneyV2, compareAtPrice as MoneyV2) && (
+              <CompareAtPrice
+                className={'opacity-50'}
+                data={compareAtPrice as MoneyV2}
+              />
+            )}
           </Text>
-        </AddToCartButton>
-      )}
-      {quickAdd && !firstVariant.availableForSale && (
-        <Button variant="secondary" className="mt-2" disabled>
-          <Text as="span" className="flex items-center justify-center gap-2">
-            Sold out
-          </Text>
-        </Button>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
