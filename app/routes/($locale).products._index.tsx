@@ -12,6 +12,7 @@ import {
 import type {
   ProductFilter,
   ProductCollectionSortKeys,
+  ProductSortKeys,
 } from '@shopify/hydrogen/storefront-api-types';
 
 import {Grid} from '~/components/Grid';
@@ -21,7 +22,12 @@ import {PRODUCT_CARD_FRAGMENT} from '~/data/fragments';
 import {getImageLoadingPriority} from '~/lib/const';
 import {seoPayload} from '~/lib/seo.server';
 import {routeHeaders} from '~/data/cache';
-import {SortFilter, type SortParam} from '~/components/SortFilter';
+import {
+  SortFilter,
+  type SortParam,
+  type Filter,
+  type AppliedFilter,
+} from '~/components/SortFilter';
 import {Button} from '~/components/Button';
 import {parseAsCurrency} from '~/lib/utils';
 import type {I18nLocale} from '~/lib/type';
@@ -91,8 +97,8 @@ export default function AllProducts() {
       <PageHeader heading="Všechny produkty" />
       <Section>
         <SortFilter
-          filters={products.filters}
-          appliedFilters={appliedFilters}
+          filters={products.filters as Filter[]}
+          appliedFilters={appliedFilters as AppliedFilter[]}
           collections={[]}
         >
           <Pagination connection={products}>
@@ -175,7 +181,7 @@ const ALL_PRODUCTS_QUERY = `#graphql
 ` as const;
 
 function getSortValuesFromParam(sortParam: SortParam | null): {
-  sortKey: ProductCollectionSortKeys;
+  sortKey: ProductSortKeys;
   reverse: boolean;
 } {
   switch (sortParam) {
@@ -196,12 +202,12 @@ function getSortValuesFromParam(sortParam: SortParam | null): {
       };
     case 'newest':
       return {
-        sortKey: 'CREATED',
+        sortKey: 'CREATED_AT',
         reverse: true,
       };
     case 'featured':
       return {
-        sortKey: 'MANUAL',
+        sortKey: 'RELEVANCE',
         reverse: false,
       };
     default:
@@ -222,27 +228,35 @@ function getAppliedFilters(
   for (const [key, value] of entries) {
     if (key.startsWith('filter.')) {
       const [, field] = key.split('.');
-      appliedFilters.push({[field]: value});
+      appliedFilters.push({[field]: value} as ProductFilter);
     }
   }
 
   return filters
     .flatMap(({values}) => values)
-    .filter((value) =>
-      appliedFilters.find(
-        (filter) => filter[value.input?.split('.')[1]] === value.input,
-      ),
-    )
-    .map((value) => {
-      const input = JSON.parse(value.input as string) as ProductFilter;
-      if (input.price) {
-        const min = parseAsCurrency(input.price.min ?? 0, locale);
-        const max = input.price.max
-          ? parseAsCurrency(input.price.max, locale)
-          : '';
-        const label = min && max ? `${min} - ${max}` : 'Cena';
-        return {filter: input, label};
+    .filter((value) => {
+      if (value.input && typeof value.input === 'string') {
+        const [, field] = value.input.split('.');
+        return appliedFilters.some(
+          (filter) => filter[field as keyof ProductFilter] === value.input,
+        );
       }
-      return {filter: input, label: value.label};
-    });
+      return false;
+    })
+    .map((value) => {
+      if (value.input && typeof value.input === 'string') {
+        const input = JSON.parse(value.input) as ProductFilter;
+        if (input.price) {
+          const min = parseAsCurrency(input.price.min ?? 0, locale);
+          const max = input.price.max
+            ? parseAsCurrency(input.price.max, locale)
+            : '';
+          const label = min && max ? `${min} - ${max}` : 'Cena';
+          return {filter: input, label};
+        }
+        return {filter: input, label: value.label};
+      }
+      return null;
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
 }

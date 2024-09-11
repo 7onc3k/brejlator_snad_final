@@ -310,23 +310,11 @@ function filterInputToParams(
 
 export default function SortMenu() {
   const items: {label: string; key: SortParam}[] = [
-    {label: 'Featured', key: 'featured'},
-    {
-      label: 'Price: Low - High',
-      key: 'price-low-high',
-    },
-    {
-      label: 'Price: High - Low',
-      key: 'price-high-low',
-    },
-    {
-      label: 'Best Selling',
-      key: 'best-selling',
-    },
-    {
-      label: 'Newest',
-      key: 'newest',
-    },
+    {label: 'Doporučené', key: 'featured'},
+    {label: 'Cena: Od nejnižší', key: 'price-low-high'},
+    {label: 'Cena: Od nejvyšší', key: 'price-high-low'},
+    {label: 'Nejprodávanější', key: 'best-selling'},
+    {label: 'Nejnovější', key: 'newest'},
   ];
   const [params] = useSearchParams();
   const location = useLocation();
