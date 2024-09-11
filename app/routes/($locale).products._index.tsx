@@ -4,20 +4,27 @@ import {
   type LoaderFunctionArgs,
 } from '@shopify/remix-oxygen';
 import {useLoaderData} from '@remix-run/react';
-import invariant from 'tiny-invariant';
 import {
   Pagination,
   getPaginationVariables,
   getSeoMeta,
 } from '@shopify/hydrogen';
+import type {
+  ProductFilter,
+  ProductCollectionSortKeys,
+} from '@shopify/hydrogen/storefront-api-types';
 
-import {PageHeader, Section} from '~/components/Text';
-import {ProductCard} from '~/components/ProductCard';
 import {Grid} from '~/components/Grid';
+import {ProductCard} from '~/components/ProductCard';
+import {Section, PageHeader} from '~/components/Text';
 import {PRODUCT_CARD_FRAGMENT} from '~/data/fragments';
 import {getImageLoadingPriority} from '~/lib/const';
 import {seoPayload} from '~/lib/seo.server';
 import {routeHeaders} from '~/data/cache';
+import {SortFilter, type SortParam} from '~/components/SortFilter';
+import {Button} from '~/components/Button';
+import {parseAsCurrency} from '~/lib/utils';
+import type {I18nLocale} from '~/lib/type';
 
 const PAGE_BY = 8;
 
@@ -27,40 +34,49 @@ export async function loader({
   request,
   context: {storefront},
 }: LoaderFunctionArgs) {
-  const variables = getPaginationVariables(request, {pageBy: PAGE_BY});
+  const searchParams = new URL(request.url).searchParams;
+  const {sortKey, reverse} = getSortValuesFromParam(
+    searchParams.get('sort') as SortParam,
+  );
+  const paginationVariables = getPaginationVariables(request, {
+    pageBy: PAGE_BY,
+  });
 
-  const data = await storefront.query(ALL_PRODUCTS_QUERY, {
+  const {products} = await storefront.query(ALL_PRODUCTS_QUERY, {
     variables: {
-      ...variables,
+      ...paginationVariables,
+      sortKey,
+      reverse,
       country: storefront.i18n.country,
       language: storefront.i18n.language,
     },
   });
 
-  invariant(data, 'No data returned from Shopify API');
+  const appliedFilters = getAppliedFilters(
+    products.filters,
+    searchParams,
+    storefront.i18n,
+  );
 
   const seo = seoPayload.collection({
     url: request.url,
     collection: {
       id: 'all-products',
-      title: 'All Products',
+      title: 'Všechny produkty',
       handle: 'products',
-      descriptionHtml: 'All the store products',
-      description: 'All the store products',
+      descriptionHtml: 'Všechny produkty v obchodě',
+      description: 'Všechny produkty v obchodě',
       seo: {
-        title: 'All Products',
-        description: 'All the store products',
+        title: 'Všechny produkty',
+        description: 'Všechny produkty v obchodě',
       },
       metafields: [],
-      products: data.products,
+      products,
       updatedAt: '',
     },
   });
 
-  return json({
-    products: data.products,
-    seo,
-  });
+  return json({products, appliedFilters, seo});
 }
 
 export const meta = ({matches}: MetaArgs<typeof loader>) => {
@@ -68,39 +84,47 @@ export const meta = ({matches}: MetaArgs<typeof loader>) => {
 };
 
 export default function AllProducts() {
-  const {products} = useLoaderData<typeof loader>();
+  const {products, appliedFilters} = useLoaderData<typeof loader>();
 
   return (
     <>
-      <PageHeader heading="All Products" variant="allCollections" />
+      <PageHeader heading="Všechny produkty" />
       <Section>
-        <Pagination connection={products}>
-          {({nodes, isLoading, NextLink, PreviousLink}) => {
-            const itemsMarkup = nodes.map((product, i) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                loading={getImageLoadingPriority(i)}
-              />
-            ));
-
-            return (
+        <SortFilter
+          filters={products.filters}
+          appliedFilters={appliedFilters}
+          collections={[]}
+        >
+          <Pagination connection={products}>
+            {({nodes, isLoading, PreviousLink, NextLink}) => (
               <>
-                <div className="flex items-center justify-center mt-6">
-                  <PreviousLink className="inline-block rounded font-medium text-center py-3 px-6 border border-primary/10 bg-contrast text-primary w-full">
-                    {isLoading ? 'Loading...' : 'Previous'}
-                  </PreviousLink>
+                <div className="flex items-center justify-center mb-6">
+                  <Button as={PreviousLink} variant="secondary" width="full">
+                    {isLoading ? 'Načítání...' : 'Předchozí produkty'}
+                  </Button>
                 </div>
-                <Grid data-test="product-grid">{itemsMarkup}</Grid>
+                <Grid
+                  layout="products"
+                  className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6"
+                >
+                  {nodes.map((product, i) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      loading={getImageLoadingPriority(i)}
+                      className="w-full h-full"
+                    />
+                  ))}
+                </Grid>
                 <div className="flex items-center justify-center mt-6">
-                  <NextLink className="inline-block rounded font-medium text-center py-3 px-6 border border-primary/10 bg-contrast text-primary w-full">
-                    {isLoading ? 'Loading...' : 'Next'}
-                  </NextLink>
+                  <Button as={NextLink} variant="secondary" width="full">
+                    {isLoading ? 'Načítání...' : 'Další produkty'}
+                  </Button>
                 </div>
               </>
-            );
-          }}
-        </Pagination>
+            )}
+          </Pagination>
+        </SortFilter>
       </Section>
     </>
   );
@@ -114,8 +138,28 @@ const ALL_PRODUCTS_QUERY = `#graphql
     $last: Int
     $startCursor: String
     $endCursor: String
+    $sortKey: ProductSortKeys
+    $reverse: Boolean
   ) @inContext(country: $country, language: $language) {
-    products(first: $first, last: $last, before: $startCursor, after: $endCursor) {
+    products(
+      first: $first,
+      last: $last,
+      before: $startCursor,
+      after: $endCursor,
+      sortKey: $sortKey,
+      reverse: $reverse
+    ) {
+      filters {
+        id
+        label
+        type
+        values {
+          id
+          label
+          count
+          input
+        }
+      }
       nodes {
         ...ProductCard
       }
@@ -129,3 +173,76 @@ const ALL_PRODUCTS_QUERY = `#graphql
   }
   ${PRODUCT_CARD_FRAGMENT}
 ` as const;
+
+function getSortValuesFromParam(sortParam: SortParam | null): {
+  sortKey: ProductCollectionSortKeys;
+  reverse: boolean;
+} {
+  switch (sortParam) {
+    case 'price-high-low':
+      return {
+        sortKey: 'PRICE',
+        reverse: true,
+      };
+    case 'price-low-high':
+      return {
+        sortKey: 'PRICE',
+        reverse: false,
+      };
+    case 'best-selling':
+      return {
+        sortKey: 'BEST_SELLING',
+        reverse: false,
+      };
+    case 'newest':
+      return {
+        sortKey: 'CREATED',
+        reverse: true,
+      };
+    case 'featured':
+      return {
+        sortKey: 'MANUAL',
+        reverse: false,
+      };
+    default:
+      return {
+        sortKey: 'RELEVANCE',
+        reverse: false,
+      };
+  }
+}
+
+function getAppliedFilters(
+  filters: any[],
+  searchParams: URLSearchParams,
+  locale: I18nLocale,
+) {
+  const appliedFilters: ProductFilter[] = [];
+  const entries = searchParams.entries();
+  for (const [key, value] of entries) {
+    if (key.startsWith('filter.')) {
+      const [, field] = key.split('.');
+      appliedFilters.push({[field]: value});
+    }
+  }
+
+  return filters
+    .flatMap(({values}) => values)
+    .filter((value) =>
+      appliedFilters.find(
+        (filter) => filter[value.input?.split('.')[1]] === value.input,
+      ),
+    )
+    .map((value) => {
+      const input = JSON.parse(value.input as string) as ProductFilter;
+      if (input.price) {
+        const min = parseAsCurrency(input.price.min ?? 0, locale);
+        const max = input.price.max
+          ? parseAsCurrency(input.price.max, locale)
+          : '';
+        const label = min && max ? `${min} - ${max}` : 'Cena';
+        return {filter: input, label};
+      }
+      return {filter: input, label: value.label};
+    });
+}

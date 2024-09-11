@@ -107,7 +107,10 @@ export default function Collection() {
                     {isLoading ? 'Načítání...' : 'Předchozí produkty'}
                   </Button>
                 </div>
-                <Grid layout="products" className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6">
+                <Grid
+                  layout="products"
+                  className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6"
+                >
                   {nodes.map((product, i) => (
                     <ProductCard
                       key={product.id}
