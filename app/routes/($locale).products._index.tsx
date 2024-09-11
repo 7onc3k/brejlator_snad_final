@@ -13,6 +13,7 @@ import type {
   ProductFilter,
   ProductCollectionSortKeys,
   ProductSortKeys,
+  Filter,
 } from '@shopify/hydrogen/storefront-api-types';
 
 import {Grid} from '~/components/Grid';
@@ -25,7 +26,6 @@ import {routeHeaders} from '~/data/cache';
 import {
   SortFilter,
   type SortParam,
-  type Filter,
   type AppliedFilter,
 } from '~/components/SortFilter';
 import {Button} from '~/components/Button';
