@@ -135,7 +135,9 @@ export default function Collection() {
           </div>
         )}
       </PageHeader>
-      <Section>
+      <Section className="min-h-screen pb-20">
+        {' '}
+        {/* Přidáno min-h-screen a padding-bottom */}
         <SortFilter
           filters={collection.products.filters as Filter[]}
           appliedFilters={appliedFilters}
