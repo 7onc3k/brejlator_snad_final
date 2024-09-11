@@ -116,7 +116,7 @@ export function FiltersDrawer({
         ) : null}
 
         <Heading as="h4" size="lead" className="pb-4">
-          Filter By
+          Filtrovat podle
         </Heading>
         <div className="divide-y">
           {filters.map((filter: Filter) => (
@@ -154,7 +154,7 @@ function AppliedFilters({filters = []}: {filters: AppliedFilter[]}) {
   return (
     <>
       <Heading as="h4" size="lead" className="pb-4">
-        Applied filters
+        Použité filtry
       </Heading>
       <div className="flex flex-wrap gap-2">
         {filters.map((filter: AppliedFilter) => {
@@ -259,24 +259,24 @@ function PriceRangeFilter({max, min}: {max?: number; min?: number}) {
   return (
     <div className="flex flex-col">
       <label className="mb-4">
-        <span>from</span>
+        <span>od</span>
         <input
           name="minPrice"
-          className="text-black"
+          className="text-black text-right w-full"
           type="number"
           value={minPrice ?? ''}
-          placeholder={'$'}
+          placeholder={'Kč'}
           onChange={onChangeMin}
         />
       </label>
       <label>
-        <span>to</span>
+        <span>do</span>
         <input
           name="maxPrice"
-          className="text-black"
+          className="text-black text-right w-full"
           type="number"
           value={maxPrice ?? ''}
-          placeholder={'$'}
+          placeholder={'Kč'}
           onChange={onChangeMax}
         />
       </label>
@@ -324,7 +324,7 @@ export default function SortMenu() {
     <Menu as="div" className="relative z-40">
       <Menu.Button className="flex items-center">
         <span className="px-2">
-          <span className="px-2 font-medium">Sort by:</span>
+          <span className="px-2 font-medium">Seřadit podle:</span>
           <span>{(activeItem || items[0]).label}</span>
         </span>
         <IconCaret />

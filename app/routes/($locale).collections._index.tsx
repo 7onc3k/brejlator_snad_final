@@ -54,14 +54,14 @@ export default function Collections() {
 
   return (
     <>
-      <PageHeader heading="Collections" />
+      <PageHeader heading="Kolekce" />
       <Section>
         <Pagination connection={collections}>
           {({nodes, isLoading, PreviousLink, NextLink}) => (
             <>
               <div className="flex items-center justify-center mb-6">
                 <Button as={PreviousLink} variant="secondary" width="full">
-                  {isLoading ? 'Loading...' : 'Previous collections'}
+                  {isLoading ? 'Načítání...' : 'Předchozí kolekce'}
                 </Button>
               </div>
               <Grid
@@ -78,7 +78,7 @@ export default function Collections() {
               </Grid>
               <div className="flex items-center justify-center mt-6">
                 <Button as={NextLink} variant="secondary" width="full">
-                  {isLoading ? 'Loading...' : 'Next collections'}
+                  {isLoading ? 'Načítání...' : 'Další kolekce'}
                 </Button>
               </div>
             </>
