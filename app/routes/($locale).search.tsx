@@ -87,18 +87,18 @@ export default function Search() {
     <>
       <PageHeader>
         <Heading as="h1" size="copy">
-          Search
+          Vyhledávání
         </Heading>
         <Form method="get" className="relative flex w-full text-heading">
           <Input
             defaultValue={searchTerm}
             name="q"
-            placeholder="Search…"
+            placeholder="Hledat…"
             type="search"
             variant="search"
           />
           <button className="absolute right-0 py-2" type="submit">
-            Go
+            Najít
           </button>
         </Form>
       </PageHeader>
@@ -123,13 +123,13 @@ export default function Search() {
                 <>
                   <div className="flex items-center justify-center mt-6">
                     <PreviousLink className="inline-block rounded font-medium text-center py-3 px-6 border border-primary/10 bg-contrast text-primary w-full">
-                      {isLoading ? 'Loading...' : 'Previous'}
+                      {isLoading ? 'Načítání...' : 'Předchozí'}
                     </PreviousLink>
                   </div>
                   <Grid data-test="product-grid">{itemsMarkup}</Grid>
                   <div className="flex items-center justify-center mt-6">
                     <NextLink className="inline-block rounded font-medium text-center py-3 px-6 border border-primary/10 bg-contrast text-primary w-full">
-                      {isLoading ? 'Loading...' : 'Next'}
+                      {isLoading ? 'Načítání...' : 'Další'}
                     </NextLink>
                   </div>
                 </>
@@ -155,13 +155,13 @@ function NoResults({
       {noResults && (
         <Section padding="x">
           <Text className="opacity-50">
-            No results, try a different search.
+            Žádné výsledky, zkuste jiné vyhledávání.
           </Text>
         </Section>
       )}
       <Suspense>
         <Await
-          errorElement="There was a problem loading related products"
+          errorElement="Při načítání souvisejících produktů došlo k problému"
           resolve={recommendations}
         >
           {(result) => {
@@ -171,11 +171,11 @@ function NoResults({
             return (
               <>
                 <FeaturedCollections
-                  title="Trending Collections"
+                  title="Populární kolekce"
                   collections={featuredCollections}
                 />
                 <ProductSwimlane
-                  title="Trending Products"
+                  title="Populární produkty"
                   products={featuredProducts}
                 />
               </>

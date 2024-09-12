@@ -100,7 +100,7 @@ export function FiltersDrawer({
             prefetch="intent"
             to={to}
           >
-            {option.label}
+            {translateFilterLabel(option.label)}
           </Link>
         );
     }
@@ -124,7 +124,9 @@ export function FiltersDrawer({
               {({open}) => (
                 <>
                   <Disclosure.Button className="flex justify-between w-full py-4">
-                    <Text size="lead">{filter.label}</Text>
+                    <Text size="lead">
+                      {translateFilterLabel(filter.label)}
+                    </Text>
                     <IconCaret direction={open ? 'up' : 'down'} />
                   </Disclosure.Button>
                   <Disclosure.Panel key={filter.id}>
@@ -257,23 +259,23 @@ function PriceRangeFilter({max, min}: {max?: number; min?: number}) {
   };
 
   return (
-    <div className="flex flex-col">
-      <label className="mb-4">
-        <span>od</span>
+    <div className="flex flex-col space-y-4">
+      <label className="flex flex-col">
+        <span className="mb-2">od</span>
         <input
           name="minPrice"
-          className="text-black text-right w-full"
+          className="w-full px-3 py-2 text-black text-right rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           type="number"
           value={minPrice ?? ''}
           placeholder={'Kč'}
           onChange={onChangeMin}
         />
       </label>
-      <label>
-        <span>do</span>
+      <label className="flex flex-col">
+        <span className="mb-2">do</span>
         <input
           name="maxPrice"
-          className="text-black text-right w-full"
+          className="w-full px-3 py-2 text-black text-right rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           type="number"
           value={maxPrice ?? ''}
           placeholder={'Kč'}
@@ -351,4 +353,16 @@ export default function SortMenu() {
       </Menu.Items>
     </Menu>
   );
+}
+
+// Přidejte tuto pomocnou funkci pro překlad názvů filtrů
+function translateFilterLabel(label: string): string {
+  switch (label.toLowerCase()) {
+    case 'availability':
+      return 'Dostupnost';
+    case 'price':
+      return 'Cena';
+    default:
+      return label;
+  }
 }

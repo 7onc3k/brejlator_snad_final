@@ -274,14 +274,6 @@ async function getLayoutData({storefront, env}: AppLoadContext) {
 
   invariant(data, 'No data returned from Shopify API');
 
-  /*
-    Modify specific links/routes (optional)
-    @see: https://shopify.dev/api/storefront/unstable/enums/MenuItemType
-    e.g here we map:
-      - /blogs/news -> /news
-      - /blog/news/blog-post -> /news/blog-post
-      - /collections/all -> /products
-  */
   const customPrefixes = {BLOG: '', CATALOG: 'products'};
 
   const headerMenu = data?.headerMenu
@@ -302,5 +294,10 @@ async function getLayoutData({storefront, env}: AppLoadContext) {
       )
     : undefined;
 
-  return {shop: data.shop, headerMenu, footerMenu};
+  return {
+    shop: data.shop,
+    headerMenu,
+    footerMenu,
+    logo: data.shop.brand?.logo?.image?.url,
+  };
 }

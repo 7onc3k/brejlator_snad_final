@@ -1,7 +1,7 @@
 import {useParams, Form, Await, useRouteLoaderData} from '@remix-run/react';
 import useWindowScroll from 'react-use/esm/useWindowScroll';
 import {Suspense, useEffect, useMemo} from 'react';
-import {CartForm} from '@shopify/hydrogen';
+import {CartForm, Image} from '@shopify/hydrogen';
 
 import {type LayoutQuery} from 'storefrontapi.generated';
 import {Text, Heading, Section} from '~/components/Text';
@@ -33,11 +33,12 @@ type LayoutProps = {
   layout?: LayoutQuery & {
     headerMenu?: EnhancedMenu | null;
     footerMenu?: EnhancedMenu | null;
+    logo?: string;
   };
 };
 
 export function PageLayout({children, layout}: LayoutProps) {
-  const {headerMenu, footerMenu} = layout || {};
+  const {headerMenu, footerMenu, logo} = layout || {};
   return (
     <>
       <div className="flex flex-col min-h-screen">
@@ -47,7 +48,7 @@ export function PageLayout({children, layout}: LayoutProps) {
           </a>
         </div>
         {headerMenu && layout?.shop.name && (
-          <Header title={layout.shop.name} menu={headerMenu} />
+          <Header title={layout.shop.name} menu={headerMenu} logo={logo} />
         )}
         <main role="main" id="mainContent" className="flex-grow">
           {children}
@@ -58,7 +59,15 @@ export function PageLayout({children, layout}: LayoutProps) {
   );
 }
 
-function Header({title, menu}: {title: string; menu?: EnhancedMenu}) {
+function Header({
+  title,
+  menu,
+  logo,
+}: {
+  title: string;
+  menu?: EnhancedMenu;
+  logo?: string;
+}) {
   const isHome = useIsHomePath();
 
   const {
@@ -92,12 +101,14 @@ function Header({title, menu}: {title: string; menu?: EnhancedMenu}) {
         title={title}
         menu={menu}
         openCart={openCart}
+        logo={logo}
       />
       <MobileHeader
         isHome={isHome}
         title={title}
         openCart={openCart}
         openMenu={openMenu}
+        logo={logo}
       />
     </>
   );
@@ -173,14 +184,14 @@ function MobileHeader({
   isHome,
   openCart,
   openMenu,
+  logo,
 }: {
   title: string;
   isHome: boolean;
   openCart: () => void;
   openMenu: () => void;
+  logo?: string;
 }) {
-  // useHeaderStyleFix(containerStyle, setContainerStyle, isHome);
-
   const params = useParams();
 
   return (
@@ -228,12 +239,22 @@ function MobileHeader({
         className="flex items-center self-stretch leading-[3rem] md:leading-[4rem] justify-center flex-grow w-full h-full"
         to="/"
       >
-        <Heading
-          className="font-bold text-center leading-none text-xl"
-          as={isHome ? 'h1' : 'h2'}
-        >
-          {title}
-        </Heading>
+        {logo ? (
+          <Image
+            src={logo}
+            alt={title}
+            className="h-8 w-auto"
+            width={32}
+            height={32}
+          />
+        ) : (
+          <Heading
+            className="font-bold text-center leading-none text-xl"
+            as={isHome ? 'h1' : 'h2'}
+          >
+            {title}
+          </Heading>
+        )}
       </Link>
 
       <div className="flex items-center justify-end w-full gap-4">
@@ -249,11 +270,13 @@ function DesktopHeader({
   menu,
   openCart,
   title,
+  logo,
 }: {
   isHome: boolean;
   openCart: () => void;
   menu?: EnhancedMenu;
   title: string;
+  logo?: string;
 }) {
   const params = useParams();
   const {y} = useWindowScroll();
@@ -268,9 +291,18 @@ function DesktopHeader({
         !isHome && y > 50 && ' shadow-lightHeader'
       } hidden h-nav lg:flex items-center sticky transition duration-300 backdrop-blur-lg z-40 top-0 justify-between w-full leading-none gap-8 px-12 py-8`}
     >
-      <div className="flex gap-12">
-        <Link className="font-bold" to="/" prefetch="intent">
-          {title}
+      <div className="flex gap-12 items-center">
+        <Link className="font-bold flex items-center" to="/" prefetch="intent">
+          {logo ? (
+            <Image
+              src={logo}
+              alt={title}
+              className="h-8 w-auto mr-2"
+              width={32}
+              height={32}
+            />
+          ) : null}
+          <span>{title}</span>
         </Link>
         <nav className="flex gap-8">
           {/* Top level menu items */}
